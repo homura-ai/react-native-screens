@@ -12,7 +12,7 @@ const destination = resolve(output);
 const run = (program, args, options = {}) =>
   execFileSync(program, args, { cwd: root, encoding: 'utf8', ...options });
 const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
-if (!/^5\.0\.0-t3\.\d+$/.test(pkg.version)) {
+if (!/^5\.0\.0-t3\.\d+(-homu\.\d+)?$/.test(pkg.version)) {
   throw new Error('Set a unique 5.0.0-t3.N package version before packaging.');
 }
 if (run('git', ['status', '--porcelain']).trim()) {
