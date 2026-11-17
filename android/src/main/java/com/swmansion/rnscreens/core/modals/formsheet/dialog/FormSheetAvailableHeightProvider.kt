@@ -2,6 +2,7 @@ package com.swmansion.rnscreens.core.modals.formsheet.dialog
 
 import android.content.Context
 import android.view.View
+import android.view.WindowInsets
 
 /**
  * View installed as the first child of the window's `android.R.id.content`, as a sibling
@@ -31,6 +32,13 @@ internal class FormSheetAvailableHeightProvider(
     init {
         visibility = INVISIBLE
         importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
+    }
+
+    override fun onApplyWindowInsets(insets: WindowInsets): WindowInsets {
+        // Material 3 sheets reset their side margins to the system bar insets on every dispatch, so measure
+        // again in this traversal to restore the placement margin set in [onAvailableWidthMeasured].
+        if (onAvailableWidthMeasured != null) requestLayout()
+        return super.onApplyWindowInsets(insets)
     }
 
     override fun onMeasure(
