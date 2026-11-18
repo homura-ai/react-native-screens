@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import com.facebook.react.bridge.UIManager
 import com.facebook.react.bridge.UIManagerListener
@@ -20,6 +21,7 @@ import com.facebook.react.views.view.ReactViewGroup
 import com.swmansion.rnscreens.core.modals.formsheet.interfaces.FormSheetContentSizeChangeDelegate
 import com.swmansion.rnscreens.core.modals.formsheet.interfaces.FormSheetContentSizeChangeProvider
 import com.swmansion.rnscreens.helpers.getFabricUIManagerNotNull
+import java.lang.ref.WeakReference
 
 @OptIn(UnstableReactNativeAPI::class)
 @SuppressLint("ViewConstructor")
@@ -41,6 +43,8 @@ class FormSheetContentView(
         get() = UIManagerHelper.getEventDispatcher(themedReactContext, UIManagerType.FABRIC)
 
     private var isWaitingForFabricMount = false
+
+    private var nestedScrollingChild: WeakReference<View>? = null
 
     init {
         if (ReactFeatureFlags.dispatchPointerEvents) {
@@ -99,6 +103,25 @@ class FormSheetContentView(
 
     override fun didDispatchMountItems(uiManager: UIManager) {
         isWaitingForFabricMount = false
+        // BottomSheetBehavior picks the view its drags hand off to only while laying out the sheet, and
+        // React views swallow requestLayout, so lay the sheet out again when that view changes.
+        val scrollingChild = findNestedScrollingChild(this)
+        if (scrollingChild !== nestedScrollingChild?.get()) {
+            nestedScrollingChild = scrollingChild?.let(::WeakReference)
+            (parent as? View)?.requestLayout()
+        }
+    }
+
+    /** The same depth-first search BottomSheetBehavior runs for its scrolling child. */
+    private fun findNestedScrollingChild(view: View): View? {
+        if (view.visibility != VISIBLE) return null
+        if (view.isNestedScrollingEnabled) return view
+        if (view is ViewGroup) {
+            for (index in 0 until view.childCount) {
+                findNestedScrollingChild(view.getChildAt(index))?.let { return it }
+            }
+        }
+        return null
     }
 
     override fun willDispatchViewUpdates(uiManager: UIManager) = Unit
