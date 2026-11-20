@@ -12,7 +12,7 @@ const destination = resolve(output);
 const run = (program, args, options = {}) =>
   execFileSync(program, args, { cwd: root, encoding: 'utf8', ...options });
 const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
-if (!/^5\.0\.0-t3\.\d+$/.test(pkg.version)) {
+if (!/^5\.0\.0-t3\.\d+(?:-homu\.\d+)?$/.test(pkg.version)) {
   throw new Error('Set a unique 5.0.0-t3.N package version before packaging.');
 }
 if (run('git', ['status', '--porcelain']).trim()) {
@@ -20,7 +20,7 @@ if (run('git', ['status', '--porcelain']).trim()) {
 }
 run('git', ['merge-base', '--is-ancestor', pkg.t3Fork.upstreamCommit, 'HEAD']);
 const provenance = {
-  repository: 'https://github.com/pingdotgg/react-native-screens',
+  repository: 'https://github.com/homura-ai/react-native-screens',
   commit: run('git', ['rev-parse', 'HEAD']).trim(),
   upstreamCommit: pkg.t3Fork.upstreamCommit,
   version: pkg.version,
